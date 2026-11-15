@@ -1,0 +1,11 @@
+node_modules/
+tests/out/
+__pycache__/
+.DS_Store
+
+# Never commit real student files (names, national IDs, grades).
+*.xlsx
+*.xls
+*.csv
+!assets/ImportCandidate_template.xlsx
+!tests/samples/*.xlsx

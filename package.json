@@ -1,0 +1,16 @@
+{
+  "name": "ibn-alhaytham-etesting-converter",
+  "version": "1.0.0",
+  "description": "Two-way converter between the Ibn Al-Haytham student system and the E-Testing Center (ImportCandidate / grade sheets). Runs fully in the browser.",
+  "private": true,
+  "scripts": {
+    "build": "python3 build.py",
+    "samples": "python3 tests/make_samples.py",
+    "test": "node tests/unit.test.js",
+    "e2e": "python3 tests/e2e.py"
+  },
+  "devDependencies": {
+    "jszip": "3.10.1",
+    "xlsx": "0.18.5"
+  }
+}

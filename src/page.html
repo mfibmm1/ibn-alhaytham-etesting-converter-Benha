@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>محوّل ابن الهيثم ↔ مركز الاختبارات الإلكترونية</title>
+<meta name="description" content="تحويل كشوف الطلاب من نظام ابن الهيثم لملف ImportCandidate، ورصد درجات مركز الاختبارات الإلكترونية في كشف رصد درجات ابن الهيثم.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+<style>
+:root{
+  --bg:#F5F7F3; --surface:#FFFFFF; --ink:#1D2B3A; --muted:#5B6773; --rule:#D8DED5;
+  --grid:#E4E9E1; --green:#1F7A4D; --green-ink:#FFFFFF; --green-soft:#E5F2EA;
+  --warn:#9A5606; --warn-soft:#FCF1E0; --err:#A3261B; --err-soft:#FBE7E4;
+  --info-soft:#EAF0F7; --info:#2B5A8A; --footer:#16202B; --footer-ink:#E8ECEF; --footer-muted:#A7B2BC;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#11171D; --surface:#19212A; --ink:#E5EAE3; --muted:#9AA6B0; --rule:#2C3742;
+    --grid:#222C36; --green:#4CC38A; --green-ink:#0C1F15; --green-soft:#16302A;
+    --warn:#F0B357; --warn-soft:#2E2414; --err:#FF8A7A; --err-soft:#341B18;
+    --info-soft:#1A2838; --info:#8DB8E8; --footer:#0B1015; --footer-ink:#E8ECEF; --footer-muted:#97A3AE;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11171D; --surface:#19212A; --ink:#E5EAE3; --muted:#9AA6B0; --rule:#2C3742;
+  --grid:#222C36; --green:#4CC38A; --green-ink:#0C1F15; --green-soft:#16302A;
+  --warn:#F0B357; --warn-soft:#2E2414; --err:#FF8A7A; --err-soft:#341B18;
+  --info-soft:#1A2838; --info:#8DB8E8; --footer:#0B1015; --footer-ink:#E8ECEF; --footer-muted:#97A3AE;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",Tahoma,"Noto Sans Arabic","Geeza Pro",Arial,sans-serif;
+  font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+main{max-width:800px;margin:0 auto;padding:36px 20px 48px}
+h1{font-size:clamp(1.5rem,4.2vw,2.1rem);font-weight:700;line-height:1.3;margin:0 0 8px}
+.lede{color:var(--muted);margin:0 0 24px;max-width:64ch}
+
+/* direction switch */
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1.5px solid var(--rule);border-radius:8px;overflow:hidden;margin-bottom:26px;background:var(--surface)}
+.tabs a{display:block;padding:12px 14px;text-decoration:none;color:var(--muted);border-inline-start:1.5px solid var(--rule);line-height:1.4}
+.tabs a:first-child{border-inline-start:0}
+.tabs a b{display:block;color:var(--ink);font-size:1rem;font-weight:600}
+.tabs a span{font-size:.84rem}
+.tabs a[aria-current="page"]{background:var(--green-soft);box-shadow:inset 0 -3px 0 var(--green)}
+.tabs a[aria-current="page"] b{color:var(--green)}
+.tabs a:focus-visible{outline:3px solid var(--green);outline-offset:-3px}
+.view{display:none}.view.on{display:block}
+
+/* sheet-like drop zones */
+.drop{position:relative;display:grid;place-items:center;text-align:center;cursor:pointer;
+  border:1.5px solid var(--rule);border-radius:6px;background-color:var(--surface);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:96px 28px;background-position:-1px -1px;min-height:190px;padding:40px 18px 18px;transition:border-color .15s}
+.drop.small{min-height:150px}
+.drop::before{content:"";position:absolute;inset:0 0 auto 0;height:28px;background:var(--green-soft);border-bottom:1.5px solid var(--green);border-radius:5px 5px 0 0}
+.drop:hover,.drop.over{border-color:var(--green)}
+.drop.over{background-color:var(--green-soft)}
+.drop.done{border-color:var(--green);border-style:solid}
+.drop:focus-within{outline:3px solid var(--green);outline-offset:3px}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.drop .inner{position:relative;background:var(--surface);padding:12px 18px;border-radius:6px;box-shadow:0 0 0 1px var(--rule);max-width:100%}
+.drop strong{display:block;font-size:1.02rem;font-weight:600}
+.drop .tag{position:absolute;top:4px;inset-inline-start:10px;font-size:.78rem;font-weight:600;color:var(--green);z-index:1}
+.drop .hint{display:block;color:var(--muted);font-size:.86rem}
+.drop .fname{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--green);font-size:.86rem;overflow-wrap:anywhere;margin-top:4px;direction:ltr;unicode-bidi:plaintext}
+.slots{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.privacy{font-size:.86rem;color:var(--muted);margin:12px 0 0}
+
+.options{display:none;flex-wrap:wrap;gap:14px 24px;align-items:center;margin-top:18px;padding:14px 16px;background:var(--surface);border:1px solid var(--rule);border-radius:6px}
+.options.show{display:flex}
+.options label{font-size:.92rem}
+.options select{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--rule);border-radius:4px;padding:6px 8px;margin-inline-start:6px}
+.options input[type=checkbox]{accent-color:var(--green);width:17px;height:17px;vertical-align:-3px;margin-inline-end:6px}
+
+.result{margin-top:28px;display:none}
+.result.show{display:block}
+.headline{display:flex;align-items:baseline;gap:12px 22px;flex-wrap:wrap;border-bottom:1.5px solid var(--rule);padding-bottom:14px;margin-bottom:16px}
+.stat{display:flex;align-items:baseline;gap:8px}
+.stat .n{font-size:2.3rem;font-weight:700;color:var(--green);line-height:1}
+.stat.minor .n{font-size:1.5rem;color:var(--ink)}
+.headline .src{flex-basis:100%;color:var(--muted);font-size:.88rem;overflow-wrap:anywhere}
+h2{font-size:1.05rem;font-weight:600;margin:24px 0 10px}
+.scroll{overflow-x:auto;border:1px solid var(--rule);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;white-space:nowrap}
+th,td{padding:7px 12px;border-bottom:1px solid var(--rule);text-align:start}
+th{font-weight:600;background:var(--green-soft);font-size:.82rem}
+td.num{direction:ltr;text-align:right;font-variant-numeric:tabular-nums}
+tr:last-child td{border-bottom:0}
+.more{color:var(--muted);font-size:.85rem;margin:6px 2px 0}
+.note-box{border-inline-start:3px solid var(--warn);background:var(--warn-soft);padding:12px 14px;border-radius:4px;margin:10px 0}
+.note-box.info{border-color:var(--info);background:var(--info-soft)}
+.note-box.err{border-color:var(--err);background:var(--err-soft)}
+.note-box h3{margin:0 0 6px;font-size:.95rem;font-weight:600;color:var(--warn)}
+.note-box.info h3{color:var(--info)}
+.note-box.err h3{color:var(--err)}
+.note-box ul{margin:0;padding-inline-start:18px;font-size:.9rem}
+.note-box p{margin:0;font-size:.9rem}
+details.note-box summary{cursor:pointer;font-weight:600;font-size:.95rem;color:var(--warn)}
+details.note-box.info summary{color:var(--info)}
+.src bdi{direction:ltr;unicode-bidi:isolate}
+details.note-box ul{margin-top:8px}
+bdi.id{direction:ltr;color:var(--muted)}
+.error{display:none;background:var(--err-soft);border-inline-start:3px solid var(--err);padding:12px 14px;border-radius:4px;margin-top:18px}
+.error.show{display:block}
+.save{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-top:22px;padding:18px;background:var(--surface);border:1.5px solid var(--green);border-radius:6px}
+.save label{flex:1 1 260px;font-size:.88rem;color:var(--muted)}
+.save input{display:block;width:100%;margin-top:4px;font:inherit;font-size:1rem;color:var(--ink);background:var(--bg);
+  border:1px solid var(--rule);border-radius:4px;padding:9px 10px;direction:ltr;text-align:left;unicode-bidi:plaintext}
+.save input:focus{outline:2px solid var(--green);outline-offset:1px}
+button{font:inherit;cursor:pointer;border-radius:4px;padding:10px 18px;border:1.5px solid var(--green)}
+.primary{background:var(--green);color:var(--green-ink);font-weight:600}
+.ghost{background:transparent;color:var(--ink);border-color:var(--rule)}
+button:focus-visible{outline:3px solid var(--green);outline-offset:2px}
+button:disabled{opacity:.6;cursor:wait}
+.status{flex-basis:100%;font-size:.88rem;color:var(--muted);min-height:1.4em;margin:0}
+.note{font-size:.88rem;color:var(--muted);margin-top:14px}
+
+/* designer credit */
+footer{max-width:800px;margin:0 auto;padding:0 20px 40px}
+.credit{display:flex;align-items:center;gap:16px;background:var(--footer);color:var(--footer-ink);border-radius:10px;padding:14px 18px;direction:ltr;text-align:left}
+.credit img{width:76px;height:auto;flex:none;background:#fff;border-radius:8px;padding:4px}
+.credit small{display:block;color:var(--footer-muted);font-size:.82rem}
+.credit strong{display:block;font-family:Georgia,"Times New Roman",serif;font-size:1.15rem;font-weight:700;line-height:1.3}
+.credit span{display:block;color:var(--footer-muted);font-size:.86rem}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+  <h1>محوّل ابن الهيثم ↔ مركز الاختبارات الإلكترونية</h1>
+  <p class="lede">اختار اتجاه التحويل، وارفع الملفات. كل حاجة بتتم جوه المتصفح بتاعك، ومفيش أي ملف بيترفع على سيرفر.</p>
+
+  <nav class="tabs" aria-label="اتجاه التحويل">
+    <a href="#roster" id="tab-roster"><b>ابن الهيثم ← الاختبارات الإلكترونية</b><span>كشف الطلاب ← ملف ImportCandidate</span></a>
+    <a href="#grades" id="tab-grades"><b>الاختبارات الإلكترونية ← ابن الهيثم</b><span>نتيجة الامتحان ← كشف رصد الدرجات</span></a>
+  </nav>
+
+  <!-- ============ Direction 1: roster -> ImportCandidate ============ -->
+  <section class="view" id="view-roster" aria-labelledby="tab-roster">
+    <label class="drop" id="r-drop">
+      <input type="file" id="r-file" accept=".xlsx,.xls,.xlsm,.csv" aria-label="اختار كشف الطلاب">
+      <span class="tag">كشف الطلاب المسجلين بالمقرر (ابن الهيثم)</span>
+      <div class="inner">
+        <strong>اسحب ملف Excel هنا أو دوس للاختيار</strong>
+        <span class="hint">xlsx أو xls</span>
+        <span class="fname" id="r-fname"></span>
+      </div>
+    </label>
+
+    <div class="error" id="r-error" role="alert"></div>
+
+    <div class="result" id="r-result" aria-live="polite">
+      <div class="headline">
+        <div class="stat"><span class="n" id="r-count">0</span><span>طالب اتحولوا</span></div>
+        <span class="src" id="r-src"></span>
+      </div>
+      <div id="r-warnings"></div>
+      <h2>أول صفوف في الملف الجديد</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>Candidate Code</th><th>First Name</th><th>Last Name</th><th>User Name</th><th>Password</th></tr></thead>
+          <tbody id="r-preview"></tbody>
+        </table>
+      </div>
+      <p class="more" id="r-more"></p>
+      <div class="save">
+        <label>اسم الملف<input id="r-out" type="text" spellcheck="false"></label>
+        <button class="primary" id="r-dl" type="button">نزّل الملف</button>
+        <p class="status" id="r-status"></p>
+      </div>
+      <p class="note">الأعمدة الإجبارية التانية (Gender وCandidateType وأكواد المراكز وPaperID) بتفضل فاضية، لازم تتملي قبل الاستيراد.</p>
+    </div>
+  </section>
+
+  <!-- ============ Direction 2: E-Testing results -> grade sheet ============ -->
+  <section class="view" id="view-grades" aria-labelledby="tab-grades">
+    <div class="slots">
+      <label class="drop small" id="g-drop-etest">
+        <input type="file" id="g-etest" accept=".xlsx,.xls,.xlsm,.csv" aria-label="اختار نتيجة الامتحان">
+        <span class="tag">1. نتيجة الامتحان (مركز الاختبارات)</span>
+        <div class="inner"><strong>ملف Candidate Statistics</strong><span class="hint">مطلوب</span><span class="fname" id="g-etest-name"></span></div>
+      </label>
+      <label class="drop small" id="g-drop-sheet">
+        <input type="file" id="g-sheet" accept=".xlsx" aria-label="اختار كشف رصد الدرجات">
+        <span class="tag">2. كشف رصد الدرجات (ابن الهيثم)</span>
+        <div class="inner"><strong>كشف رصد درجات المقرر</strong><span class="hint">مطلوب</span><span class="fname" id="g-sheet-name"></span></div>
+      </label>
+      <label class="drop small" id="g-drop-roster">
+        <input type="file" id="g-roster" accept=".xlsx,.xls,.xlsm,.csv" aria-label="اختار كشف الطلاب المسجلين">
+        <span class="tag">3. كشف الطلاب المسجلين (اختياري)</span>
+        <div class="inner"><strong>بيربط الكود بالرقم القومي</strong><span class="hint">بيخلّي المطابقة أدق</span><span class="fname" id="g-roster-name"></span></div>
+      </label>
+    </div>
+
+    <div class="options" id="g-options">
+      <label>حط الدرجة في عمود<select id="g-col"></select></label>
+      <label><input type="checkbox" id="g-overwrite">استبدل الدرجات المكتوبة بالفعل</label>
+    </div>
+
+    <div class="error" id="g-error" role="alert"></div>
+
+    <div class="result" id="g-result" aria-live="polite">
+      <div class="headline">
+        <div class="stat"><span class="n" id="g-filled">0</span><span>درجة اترصدت</span></div>
+        <div class="stat minor"><span class="n" id="g-total">0</span><span>طالب في الكشف</span></div>
+        <span class="src" id="g-src"></span>
+      </div>
+      <div id="g-notes"></div>
+      <h2>أول صفوف في الكشف بعد الرصد</h2>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>الكود</th><th>الاسم</th><th id="g-colhead">الدرجة</th><th>طريقة المطابقة</th></tr></thead>
+          <tbody id="g-preview"></tbody>
+        </table>
+      </div>
+      <div class="save">
+        <label>اسم الملف<input id="g-out" type="text" spellcheck="false"></label>
+        <button class="primary" id="g-dl" type="button">نزّل الكشف</button>
+        <p class="status" id="g-status"></p>
+      </div>
+      <p class="note">الكشف بيفضل زي ما هو بالظبط، والتغيير الوحيد هو الدرجات في العمود اللي اخترته. الطلاب اللي مش في نتيجة الامتحان خاناتهم بتفضل فاضية.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="credit">
+    <img src="data:image/png;base64,__LOGO_B64__" alt="Benha University logo">
+    <div>
+      <small>Designed by</small>
+      <strong>Dr. Mohamed Fawzy</strong>
+      <span>Faculty of Computers and Artificial Intelligence, Benha University</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/*__XLSX__*/
+</script>
+<script>
+/*__JSZIP__*/
+</script>
+<script>
+/*__ROSTER_JS__*/
+</script>
+<script>
+/*__GRADES_JS__*/
+</script>
+<script>
+/*__APP_JS__*/
+</script>
+</body>
+</html>
